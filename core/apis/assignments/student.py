@@ -1,3 +1,5 @@
+import sys
+
 from flask import Blueprint
 from core import db
 from core.apis import decorators
@@ -22,8 +24,12 @@ def list_assignments(p):
 @decorators.authenticate_principal
 def upsert_assignment(p, incoming_payload):
     """Create or Edit an assignment"""
+    # print(incoming_payload, file=sys.stdout)
     assignment = AssignmentSchema().load(incoming_payload)
     assignment.student_id = p.student_id
+
+    if not assignment.content:
+        return APIResponse.bad_request(data={})
 
     upserted_assignment = Assignment.upsert(assignment)
     db.session.commit()
@@ -37,6 +43,10 @@ def upsert_assignment(p, incoming_payload):
 def submit_assignment(p, incoming_payload):
     """Submit an assignment"""
     submit_assignment_payload = AssignmentSubmitSchema().load(incoming_payload)
+    assignment = Assignment.get_by_id(submit_assignment_payload.id)
+
+    if assignment.state != "DRAFT":
+        return APIResponse.bad_request(data={}, error="FyleError", message="only a draft assignment can be submitted")
 
     submitted_assignment = Assignment.submit(
         _id=submit_assignment_payload.id,

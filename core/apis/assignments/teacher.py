@@ -23,6 +23,15 @@ def list_assignments(p):
 def grade_assignment(p, incoming_payload):
     """Grade an assignment"""
     grade_assignment_payload = AssignmentGradeSchema().load(incoming_payload)
+    assignment_payload = AssignmentSchema().load(incoming_payload)
+
+    assignment = Assignment.get_by_id(grade_assignment_payload.id)
+
+    if not assignment:
+        return APIResponse.not_found(data={}, error="FyleError")
+
+    if p.teacher_id != assignment_payload.teacher_id:
+        return APIResponse.bad_request(data={}, error="FyleError")
 
     graded_assignment = Assignment.mark_grade(
         _id=grade_assignment_payload.id,

@@ -1,1 +1,1 @@
--- Write query to find the number of grade A's given by the teacher who has graded the most assignments
+SELECT teacher_id, COUNT(teacher_id) FROM assignments WHERE assignments.state == "GRADED";
